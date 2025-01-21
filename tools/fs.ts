@@ -110,7 +110,7 @@ export class FileSystemTools {
     } catch (error) {
       return {
         success: false,
-        message: `Operation failed: ${error.message}`,
+        message: `Operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         path: operation.path,
         error: 'OPERATION_FAILED'
       };
@@ -155,4 +155,41 @@ export class FileSystemTools {
       return null;
     }
   }
-} 
+
+  public async listFiles(path: string): Promise<string[]> {
+    const fullPath = this.resolvePath(path);
+    try {
+      return readdirSync(fullPath);
+    } catch (error) {
+      throw new Error(`Failed to list files: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  public async changeDirectory(path: string): Promise<void> {
+    const fullPath = this.resolvePath(path);
+    if (!existsSync(fullPath)) {
+      throw new Error(`Directory does not exist: ${path}`);
+    }
+    if (!statSync(fullPath).isDirectory()) {
+      throw new Error(`Path is not a directory: ${path}`);
+    }
+    this.workspacePath = fullPath;
+  }
+
+  public async createDirectory(path: string): Promise<void> {
+    const fullPath = this.resolvePath(path);
+    if (existsSync(fullPath)) {
+      throw new Error(`Directory already exists: ${path}`);
+    }
+    mkdirSync(fullPath, { recursive: true });
+  }
+
+  public async createFile(path: string): Promise<void> {
+    const fullPath = this.resolvePath(path);
+    if (existsSync(fullPath)) {
+      throw new Error(`File already exists: ${path}`);
+    }
+    this.ensureDirectoryExists(fullPath);
+    writeFileSync(fullPath, '');
+  }
+}

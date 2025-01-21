@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { FileExplorer } from './file-explorer'
 import { Editor } from './editor'
-import { Terminal } from './terminal'
+import { TerminalComponentImpl as TerminalComponent } from './TerminalComponentImpl'
 import { TopBar } from './top-bar'
 import { StatusBar } from './status-bar'
 import { RightPanel } from './right-panel'
@@ -11,16 +11,17 @@ import { cn } from '@/lib/utils'
 import { useToast } from '@/components/ui/use-toast'
 import { Toaster } from '@/components/ui/toaster'
 
-interface FileSystemItem {
+interface File {
   name: string;
   type: 'file' | 'folder';
-  content?: string;
-  children?: FileSystemItem[];
+  content: string;
+  children?: File[];
   size?: number;
   modifiedTime?: string;
+  path: string;
 }
 
-async function fetchFileSystem(path: string = ''): Promise<FileSystemItem[]> {
+async function fetchFileSystem(path: string = ''): Promise<File[]> {
   const response = await fetch('/api/filesystem', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -38,7 +39,7 @@ export function IDE() {
   const [isChatOpen, setIsChatOpen] = useState(true)
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [activeFileContent, setActiveFileContent] = useState<string>('')
-  const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([])
+  const [fileSystem, setFileSystem] = useState<File[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   // Load initial file system
@@ -278,7 +279,7 @@ export function IDE() {
               onEditFile={handleEditFile}
             />
           </div>
-          {isTerminalOpen && <Terminal />}
+          {isTerminalOpen && <TerminalComponent />}
         </div>
         {isChatOpen && (
           <RightPanel 
@@ -287,7 +288,7 @@ export function IDE() {
             files={fileSystem}
             onEditFile={handleEditFile}
             onCreateFile={handleCreateFile}
-            onDeleteItem={handleDeleteItem}
+            onDeleteFile={handleDeleteItem}
           />
         )}
       </div>
@@ -296,4 +297,3 @@ export function IDE() {
     </div>
   )
 }
-
